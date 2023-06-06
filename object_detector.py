@@ -21,17 +21,14 @@ class object_detector():
         self.net.setInputSwapRB(True)
 
     def getObjects(self,img):
-        classIds, confs, bbox = self.net.detect(img, confThreshold=self.thres)
-        bbox = list(bbox)
-        confs = list(np.array(confs).reshape(1,-1)[0])
-        confs = list(map(float,confs))
-        indices = cv2.dnn.NMSBoxes(bbox, confs, self.thres, nms_threshold=self.nms_threshold)
-        for i in indices:
-            box = bbox[i]
-            x, y, w, h = box[0], box[1], box[2], box[3]
-            cv2.rectangle(img, (x, y), (x+w, h+y), color=(0, 255, 0), thickness=2)
-            cv2.putText(img,  self.classNames[classIds[i]-1].upper(), (box[0]+10,box[1]+30),
-                        cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
+        classIds, confs, bbox = self.net.detect(img, confThreshold=self.thres, nmsThreshold=self.nms_threshold)
+        if len(classIds) != 0:
+            for classId, confidence,box in zip(classIds.flatten(),confs.flatten(),bbox):
+                cv2.rectangle(img,box,color=(0,255,0),thickness=2)
+                cv2.putText(img,self.classNames[classId-1].upper(),(box[0]+10,box[1]+30),
+                cv2.FONT_HERSHEY_COMPLEX,1,(0,255,0),2)
+                cv2.putText(img,str(round(confidence*100,2)),(box[0]+200,box[1]+30),
+                cv2.FONT_HERSHEY_COMPLEX,1,(0,255,0),2)
         return img
 
 if __name__ == "__main__":
