@@ -39,12 +39,12 @@ class object_detector():
         return img, objectInfo
 
 if __name__ == "__main__":
-    cap = cv2.VideoCapture(0)
-    cap.set(3,640)
-    cap.set(4,480)
-    od = object_detector()
+    camera = cv2.VideoCapture(0)
+    camera.set(3,640)
+    camera.set(4,480)
+    od = object_detector(threshold=0.5, nms_threshold=0.2)
     while True:
-        success, img = cap.read()
+        success, img = camera.read()
         target_object = []
         result, objectInfo = od.getObjects(img, draw=True, objects=target_object)
         print(objectInfo)
