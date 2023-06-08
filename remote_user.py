@@ -11,7 +11,6 @@ class remote_user():
         # Accept a client connection
         self.client_socket, self.client_address = self.server_socket.accept()
 
-        
     def recvall(self, length):
         buf = b''
         while length:
@@ -31,12 +30,13 @@ class remote_user():
         # Display the received image
         self.image = cv2.imdecode(data,1)
         self.client_socket.send("Image Received".encode())
+        return self.image
 
     def get_packet(self):
         length = self.recvall(16)
         self.packet = self.recvall(int(length))
         self.client_socket.send("Packet Received".encode())
-
+        return self.packet.decode()
     
     def print_packet(self):
         self.output = self.packet.decode()
@@ -51,6 +51,9 @@ class remote_user():
         # Close the connection
         self.client_socket.close()
         self.server_socket.close()
+    
+    def run(self):
+        return self.get_image(), self.get_packet().split('\n')
 
 def run_remote_user(IP='127.0.0.1', PORT=8000):
     u = remote_user(IP, PORT)

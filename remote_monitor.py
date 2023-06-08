@@ -3,49 +3,54 @@ import numpy as np
 import socket
 from movement_detector import *
 
-def run_remote_monitor(IP='127.0.0.1', PORT=8000):
-    # Connect to the server
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect((IP, PORT))
+class remote_monitor():
+    def __init__(self, IP='127.0.0.1', PORT=8000):
+        # Connect to the server
+        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.client_socket.connect((IP, PORT))
+        self.m = movement_detector(threshold=0.5, nms_threshold=0.2, objects=[])
 
-    # Create movement_detector
-    try:
-        m = movement_detector(threshold=0.5, nms_threshold=0.2, objects=[])
-        while True:
-            # Load the image
-            image, messages = m.run(show=False)
 
-            # Convert the image to a string
-            
-            encode_param=[int(cv2.IMWRITE_JPEG_QUALITY),90]
-            result, image_data = cv2.imencode('.jpg', image, encode_param)
-            data = np.array(image_data)
-            
-            stringData = data.tostring()
+    def run(self):
+        # Load the image
+        image, messages = self.m.run(show=False)
 
-            # Send the image data
-            client_socket.send(str(len(stringData)).ljust(16).encode())
-            client_socket.sendall(image_data)
-            
-            packet = ''
-            for message in messages:
-                packet += message
-                packet += '\n'
-                print(message)
+        # Convert the image to a string
+        
+        encode_param=[int(cv2.IMWRITE_JPEG_QUALITY),90]
+        result, image_data = cv2.imencode('.jpg', image, encode_param)
+        data = np.array(image_data)
+        
+        stringData = data.tostring()
 
-            client_socket.recv(4096).decode()
+        # Send the image data
+        self.client_socket.send(str(len(stringData)).ljust(16).encode())
+        self.client_socket.sendall(image_data)
+        
+        packet = ''
+        for message in messages:
+            packet += message
+            packet += '\n'
+            print(message)
 
-            # Send the message
-            client_socket.send(str(len(packet)).ljust(16).encode())
-            client_socket.sendall(packet.encode())
+        self.client_socket.recv(4096).decode()
 
-            client_socket.recv(4096)
+        # Send the message
+        self.client_socket.send(str(len(packet)).ljust(16).encode())
+        self.client_socket.sendall(packet.encode())
 
-    except KeyboardInterrupt:
-        print("Keyboard interrupt received. Closing the socket.")
+        self.client_socket.recv(4096)
+        return image, messages
 
-    # Close the connection
-    client_socket.close()
+    def run_remote_monitor_loop(self):
+        try:
+            while True:
+                 self.run()
+        except KeyboardInterrupt:
+            print("Keyboard interrupt received. Closing the socket.")
+        # Close the connection
+        self.client_socket.close()
 
 if __name__ == '__main__':
-    run_remote_monitor()
+    monitor = remote_monitor()
+    monitor.run_remote_monitor_loop()

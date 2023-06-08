@@ -5,8 +5,10 @@ from remote_user import *
 from remote_monitor import *
 from PIL import Image, ImageTk
 class Gui():
-    def __init__(self):
+    def __init__(self, IP='127.0.0.1', PORT=8000):
         self.gui = tk.Tk()
+        self.IP = IP
+        self.PORT = PORT
         self.set_title()
         self.set_canvas()
         self.status_string = tk.StringVar()
@@ -14,12 +16,12 @@ class Gui():
         self.status_string.set("Welcome to my smart home!!!")
         self.message.set("")
         self.status = tk.Label(textvariable = self.status_string, width=30, font=('Times', 24)).pack()
-        self.message_label = tk.Label(textvariable = self.message, width=40, height=4, background="#34A2FE").pack()
+        self.message_label = tk.Label(textvariable = self.message, width=40, height=3, background="#D1F4C0").pack()
         self.set_button()
         self.currentwork = None
         self.process_list = {'local': False, "monitor": False, "user": False}
-
-        
+        self.done = False
+        self.connection_established = False
     
     def set_canvas(self):
         self.mainpage_img = tk.PhotoImage(file = "smart_home.png").subsample(3, 3)
@@ -41,19 +43,25 @@ class Gui():
     def set_status(self, status):
         self.status_string.set(status)
 
+    def set_done(self):
+        self.done = True
+
     def run_remote_monitor(self):
         if (self.process_list['local'] == False and self.process_list['user'] == False):
             self.process_list['monitor'] = True
-        #run_remote_monitor()
 
     def run_remote_user(self):
         if (self.process_list['local'] == False and self.process_list['monitor'] == False):
             self.process_list['user'] = True
-        #run_remote_user()
     
     def end_work(self):
+        if self.process_list['monitor']:
+            self.monitor.client_socket.close()
+        if self.process_list['user']:
+            self.user.close_socket()
         for process_id in self.process_list:
             self.process_list[process_id] = False
+        self.connection_established = False
         self.set_status("Welcome to my smart home!!!")
         self.w.itemconfig(self.image_container,image=self.mainpage_img)
 
@@ -71,39 +79,63 @@ class Gui():
                                        text='Start Monitoring (Remote User)', 
                                        width=25, 
                                        command=lambda: [self.set_status("Running as remote user"), self.run_remote_user()])
+        remote_exit_button = tk.Button(self.gui, 
+                                       text='Exit', 
+                                       width=25, 
+                                       command=self.set_done)
         
-        stop_button = tk.Button(self.gui, text='End Current Work', width=25, command=self.end_work)
+        stop_button = tk.Button(self.gui, 
+                                text='End Current Work', 
+                                width=25, 
+                                command=self.end_work)
         start_button.pack()
         remote_user_button.pack()
         remote_monitor_button.pack()
         stop_button.pack()
+        remote_exit_button.pack()
 
 
     def run(self):
         self.m = movement_detector(threshold=0.5, nms_threshold=0.2, objects=[])
         while True:
             self.gui.update()
+            display = True
+            if self.done:
+                self.end_work()
+                break
             if self.process_list['local']:
                 img, message = self.m.run(show=False)
-                #Rearrange colors
+            elif self.process_list['monitor']:
+                if not self.connection_established:
+                    self.monitor = remote_monitor(self.IP, self.PORT)
+                    self.connection_established = True
+                img, message = self.monitor.run()
+            elif self.process_list['user']:
+                if not self.connection_established:
+                    self.user = remote_user(self.IP, self.PORT)
+                    self.connection_established = True
+                img, message = self.user.run()
+            else:
+                display = False
+
+            if display:
                 blue,green,red = cv2.split(img)
                 img = cv2.merge((red,green,blue))
                 im = Image.fromarray(img)
                 imgtk = ImageTk.PhotoImage(image=im)
-                #self.image_container = self.w.create_image(0,0, anchor="CENTER",image=imgtk)
                 self.w.itemconfig(self.image_container,image=imgtk)
-                #Create a Label to display the image
-                if (len(message) != 0):
-                    packet = ''
-                    for i in message:
-                        packet += i
-                        packet += '\n'
-                    self.message.set(packet)
-            elif self.process_list['monitor']:
-                run_remote_monitor()
-            elif self.process_list['user']:
-                run_remote_user()
-            
+                self.display(message)
+
+    
+    def display(self, message):
+        #Create a Label to display the image
+        if (len(message) != 0):
+            packet = ''
+            for i in message:
+                packet += i
+                packet += '\n'
+            self.message.set(packet)
+
 
 g = Gui()
 g.run()
