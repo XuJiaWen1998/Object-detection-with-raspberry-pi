@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import socket
 from threading import Thread
-class User():
+class remote_user():
     def __init__(self):
         # Set up the server
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -40,14 +40,16 @@ class User():
         self.client_socket.close()
         self.server_socket.close()
 
-
-u = User()
-try:
-    while True:
-        u.get_image()
-        u.show_image()
+def run_remote_user():
+    u = remote_user()
+    try:
+        while True:
+            u.get_image()
+            u.show_image()
+        
+    except KeyboardInterrupt:
+        print("Keyboard interrupt received. Closing the socket.")
+        u.close_socket()
     
-except KeyboardInterrupt:
-    print("Keyboard interrupt received. Closing the socket.")
-    u.close_socket()
-    
+if __name__ == '__main__':
+    run_remote_user()

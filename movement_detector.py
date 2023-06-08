@@ -20,7 +20,7 @@ class movement_detector():
             if item not in self.result_table.keys():
                 print("%s disappear!" % item)
 
-    def check_movement(self, position_thres = 100):
+    def check_movement(self, position_thres = 200):
         for item in self.prev_result_table.keys():
             if item in self.result_table.keys():
                 prev_box_position = self.prev_result_table[item]
