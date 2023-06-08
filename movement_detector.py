@@ -9,16 +9,21 @@ class movement_detector():
         self.result_table = {}
         self.prev_result_table = {}
         self.target_object = objects
+        self.messages = []
     
     def check_appear(self):
         for item in self.result_table.keys():
             if item not in self.prev_result_table.keys():
-                print("%s appear!" % item)
+                message = "%s appear!" % item
+                self.messages.append(message)
+                print(message)
 
     def check_disappear(self):
         for item in self.prev_result_table.keys():
             if item not in self.result_table.keys():
-                print("%s disappear!" % item)
+                message = "%s disappear!" % item
+                self.messages.append(message)
+                print(message)
 
     def check_movement(self, position_thres = 200):
         for item in self.prev_result_table.keys():
@@ -26,7 +31,9 @@ class movement_detector():
                 prev_box_position = self.prev_result_table[item]
                 curr_box_position = self.result_table[item]
                 if np.sum(np.abs(np.subtract(prev_box_position, curr_box_position))) > position_thres:
-                    print("%s is moving" % item)
+                    message = "%s is moving" % item
+                    self.messages.append(message)
+                    print(message)
 
 
     def store_result(self, objectInfo):
@@ -38,6 +45,7 @@ class movement_detector():
     def run(self, show=True):
         success, img = self.camera.read()
         result, objectInfo = self.od.getObjects(img, draw=True, objects=self.target_object)
+        self.messages = []
         self.store_result(objectInfo)
         self.check_appear()
         self.check_disappear()
@@ -45,8 +53,21 @@ class movement_detector():
         if show:
             cv2.imshow("Output", result)
             cv2.waitKey(1)
+            return self.messages
         else:
-            return img
+            return img, self.messages
+        
+    def run_loop(self):
+        while True:
+            success, img = self.camera.read()
+            result, objectInfo = self.od.getObjects(img, draw=True, objects=self.target_object)
+            self.messages = []
+            self.store_result(objectInfo)
+            self.check_appear()
+            self.check_disappear()
+            self.check_movement()
+            cv2.imshow("Output", result)
+            cv2.waitKey(1)
 
 if __name__ == "__main__":
     m = movement_detector(threshold=0.5, nms_threshold=0.2, objects=[])
