@@ -16,7 +16,7 @@ class Gui():
         self.status_string.set("Welcome to my smart home!!!")
         self.message.set("")
         self.status = tk.Label(textvariable = self.status_string, width=30, font=('Times', 24)).pack()
-        self.message_label = tk.Label(textvariable = self.message, width=40, height=3, background="#D1F4C0").pack()
+        self.message_label = tk.Label(textvariable = self.message, width=40, height=3).pack()
         self.set_button()
         self.currentwork = None
         self.process_list = {'local': False, "monitor": False, "user": False}
@@ -24,11 +24,9 @@ class Gui():
         self.connection_established = False
     
     def set_canvas(self):
-        self.mainpage_img = tk.PhotoImage(file = "smart_home.png").subsample(3, 3)
         self.w = tk.Canvas(self.gui, width=640, height=480)
-        self.image_container = self.w.create_image(0,0, anchor="nw",image=self.mainpage_img)
+        self.image_container = self.w.create_image(0,0, anchor="nw")
         self.w.pack()
-        #self.w.itemconfig(self.image_container,image=self.mainpage_img)
 
     def set_title(self):
         self.gui.title('Smart Home Program')
@@ -63,7 +61,6 @@ class Gui():
             self.process_list[process_id] = False
         self.connection_established = False
         self.set_status("Welcome to my smart home!!!")
-        self.w.itemconfig(self.image_container,image=self.mainpage_img)
 
     def set_button(self):
         start_button = tk.Button(self.gui, 
