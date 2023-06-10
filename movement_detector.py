@@ -25,13 +25,14 @@ class movement_detector():
                 self.messages.append(message)
                 print(message)
 
-    def check_movement(self, position_thres = 1e-3):
+    def check_movement(self, position_thres = 1e-2):
         for item in self.prev_result_table.keys():
             if item in self.result_table.keys():
                 prev_box_position = self.prev_result_table[item]
                 curr_box_position = self.result_table[item]
+            
                 area = (prev_box_position[2]-prev_box_position[0]) * (prev_box_position[3] - prev_box_position[1])
-                score = np.sum(np.abs(np.subtract(prev_box_position, curr_box_position)))/area
+                score = np.sum(np.abs(np.subtract(prev_box_position, curr_box_position))) ** 2/area
                 if  score > position_thres:
                     message = "%s is moving" % item
                     self.messages.append(message)
@@ -72,6 +73,6 @@ class movement_detector():
             cv2.waitKey(1)
 
 if __name__ == "__main__":
-    m = movement_detector(threshold=0.5, nms_threshold=0.2, objects=[])
+    m = movement_detector(threshold=0.5, nms_threshold=0.2, objects=['person'])
     while(True):
         m.run()

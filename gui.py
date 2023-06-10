@@ -17,6 +17,11 @@ class Gui():
         self.message.set("")
         self.status = tk.Label(textvariable = self.status_string, width=30, font=('Times', 24)).pack()
         self.message_label = tk.Label(textvariable = self.message, width=40, height=3).pack()
+        L1 = tk.Label(self.gui, text="My IP address")
+        L1.pack()
+        self.IP_address_string = tk.StringVar()
+        self.IP_address = tk.Entry(self.gui, textvariable=self.IP_address_string)
+        self.IP_address.pack()
         self.set_button()
         self.currentwork = None
         self.process_list = {'local': False, "monitor": False, "user": False}
@@ -104,12 +109,12 @@ class Gui():
                 img, message = self.m.run(show=False)
             elif self.process_list['monitor']:
                 if not self.connection_established:
-                    self.monitor = remote_monitor(self.IP, self.PORT)
+                    self.monitor = remote_monitor(self.IP_address_string.get(), self.PORT)
                     self.connection_established = True
                 img, message = self.monitor.run()
             elif self.process_list['user']:
                 if not self.connection_established:
-                    self.user = remote_user(self.IP, self.PORT)
+                    self.user = remote_user(self.IP_address_string.get(), self.PORT)
                     self.connection_established = True
                 img, message = self.user.run()
             else:
